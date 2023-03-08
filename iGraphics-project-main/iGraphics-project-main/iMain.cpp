@@ -1,0 +1,642 @@
+#include<bits/stdc++.h>
+
+#include<windows.h>
+
+#include<mmsystem.h>
+
+#include<string.h>
+
+using namespace std;
+
+#include "iGraphics.h"
+
+#define balloonnumber 7
+
+char highscore3[20];
+
+char highscore2[20];
+
+char highscore1[20];
+
+bool homepage=true;
+
+bool highscorepage=false;
+
+bool gameoverpage=false;
+
+bool gamestart=false;
+
+bool rulespage=false;
+
+int score=0;
+char player_name[20];
+char name[20];
+int name_index=0;
+
+bool namebox_show=true;
+
+int shoots_remaining=25;
+//whether to shoot
+bool shootvariable;
+//bool bulletshow;
+int x[7],y[7];
+
+int mx,my;
+//setting up background images
+char bgpics[2][30]= {"24 bit bmp bg.bmp","winniethepoohlegs.bmp"};
+//setting up balloons images
+char balloonpics[7][40]= {"24bitblueballoon.bmp","24bitbeehivereduced.bmp","24bitgreen2.bmp","24bitpinkballoon.bmp","24bitmarronballon.bmp","24bityellowballoonreduced.bmp","24bitgreenballon.bmp"};
+//for loops,i cant help using i
+int i;
+//pointing the gun
+int muzzleindex=3;
+char muzzle[7][30]= {"winniethepoohgun0.bmp","winniethepoohgun1.bmp","winniethepoohgun2.bmp","winniethepoohgun3.bmp","winniethepoohgun4.bmp","winniethepoohgun5.bmp","winniethepoohgun6.bmp"};
+
+struct player
+{
+    int score;
+    char name[20];
+} player;
+
+struct score
+{
+    char name[20];
+    int score;
+} s[20];
+//sorted score and high score
+void sortedscore()
+{
+    struct score temp;
+    FILE *fp;
+    int i=0,l,j;
+    char ch;
+    fp=fopen("High score.txt","r");
+    while(!feof(fp))
+    {
+        fscanf(fp," %s %d",s[i].name,&s[i].score);
+        ch=fgetc(fp);
+        i++;
+    }
+    l=i;
+
+    for(i=0; i<l; i++)
+    {
+        for(j=0; j<l-1; j++)
+        {
+            if(s[j+1].score<s[j].score)
+            {
+                temp=s[j];
+                s[j]=s[j+1];
+                s[j+1]=temp;
+            }
+        }
+    }
+    fclose(fp);
+
+    fp=fopen("sortedscore.txt","w");
+    for(i=0; i<l; i++)
+    {
+        fprintf(fp,"%s %d\n",s[i].name,s[i].score);
+    }
+    fclose(fp);
+}
+char line[120][20];
+void highfunction()
+{
+    FILE* dp;
+    //char line[120][20];
+    int i=0;
+    dp=fopen("sortedscore.txt","r");
+    //if(dp!=NULL){
+    while(fgets(line[i], 20, dp))
+    {
+        line[i][strlen(line[i]) -1] = '\0';
+        i++;
+    }
+
+    strcpy(highscore3,line[i-1]);
+    strcpy(highscore2,line[i-2]);
+    strcpy(highscore1,line[i-3]);
+    //fclose(dp);
+
+    fclose(dp);
+    //}
+}
+
+//to initialize bullet coordinates
+struct bulletout
+{
+    int xindex;
+    int yindex;
+    bool bulletshow;
+};
+
+
+int xcoordinates[7]= {162,167,177,180,187,196,204};
+
+int ycoordinates[7]= {226,217,208,197,186,181,179};
+
+struct bulletout bulletoutcoordinates[7];
+
+void setbulletvariables()
+{
+    for(int i=0; i<7; i++)
+    {
+
+        bulletoutcoordinates[i].xindex=xcoordinates[i];
+        bulletoutcoordinates[i].yindex=ycoordinates[i];
+        bulletoutcoordinates[i].bulletshow=false;
+    }
+
+}
+
+struct balloon
+{
+    int xaxis;
+    int yaxis;
+//int balloonindex;
+    bool balloonshow;
+};
+
+struct balloon balloon[balloonnumber];
+
+void balloonvariables()
+{
+    for(int i=0; i<balloonnumber; i++)
+    {
+        balloon[i].xaxis=512+rand()%400;
+        if(i>5) balloon[i].yaxis=512-rand()%100;
+        else balloon[i].yaxis=512-rand()%20;
+        //balloon[i].balloonindex=i;
+        balloon[i].balloonshow=true;
+    }
+}
+void bulletchange()
+{
+    //same change of x axis for all balloons
+    //for bullet from 1st coordinate
+    if(bulletoutcoordinates[0].bulletshow)
+    {
+        x[0]+=20;
+        y[0]+=5;
+    }
+    //for 2nd bullet
+    if(bulletoutcoordinates[1].bulletshow)
+    {
+        x[1]+=20;
+        y[1]+=4;
+    }
+    //for 3rd bullet
+    if(bulletoutcoordinates[2].bulletshow)
+    {
+        x[2]+=20;
+        y[2]+=2;
+    }
+    //for 4th bullet
+    if(bulletoutcoordinates[3].bulletshow)
+    {
+        x[3]+=20;
+
+    }
+    //for 5th bullet
+    if(bulletoutcoordinates[4].bulletshow)
+    {
+        x[4]+=20;
+        y[4]-=2;
+
+    }
+    //for 6th bullet
+    if(bulletoutcoordinates[5].bulletshow)
+    {
+        x[5]+=20;
+        y[5]-=3;
+
+    }
+    //for 7th bullet
+    if(bulletoutcoordinates[6].bulletshow)
+    {
+        x[6]+=20;
+        y[6]-=4;
+
+    }
+}
+
+void shoot()
+{
+    if(bulletoutcoordinates[0].bulletshow)
+    {
+
+        iShowBMP2(x[0],y[0],"fw3_1.bmp",0);
+
+    }
+
+    if(bulletoutcoordinates[1].bulletshow)
+    {
+
+        iShowBMP2(x[1],y[1],"fw3_1.bmp",0);
+
+    }
+
+    if(bulletoutcoordinates[2].bulletshow)
+    {
+
+        iShowBMP2(x[2],y[2],"fw3_1.bmp",0);
+
+    }
+
+    if(bulletoutcoordinates[3].bulletshow)
+    {
+
+        iShowBMP2(x[3],y[3],"fw3_1.bmp",0);
+
+    }
+
+    if(bulletoutcoordinates[4].bulletshow)
+    {
+
+        iShowBMP2(x[4],y[4],"fw3_1.bmp",0);
+
+    }
+
+    if(bulletoutcoordinates[5].bulletshow)
+    {
+
+        iShowBMP2(x[5],y[5],"fw3_1.bmp",0);
+
+    }
+
+
+    if(bulletoutcoordinates[6].bulletshow)
+    {
+
+        iShowBMP2(x[6],y[6],"fw3_1.bmp",0);
+
+    }
+}
+//int j=0;
+void collision()
+{
+    //j++;
+    //printf("%d",j);
+    for(i=0; i<balloonnumber; i++)
+    {
+        //printf("%d ",i);
+        for(int j=0; j<balloonnumber; j++)
+        {
+            if(bulletoutcoordinates[i].bulletshow && balloon[j].balloonshow && (y[i]+20<=balloon[j].yaxis+84) && (y[i]>=balloon[j].yaxis) && (x[i]<=balloon[j].xaxis+64) && (x[i]+20>=balloon[j].xaxis))
+            {
+                score+=1;
+                //printf("%d %d\n",balloon[i].yaxis,balloon[i].xaxis);
+                //printf("%d %d\n",y[i],x[i%7]);
+                bulletoutcoordinates[i].bulletshow=false;
+                //iShowBMP2(x,y,"fw1_8.bmp",0);
+                balloon[j].balloonshow=false;
+            }
+        }
+    }
+}
+
+void balloonmovement()
+{
+    for(int i=0; i<balloonnumber; i++)
+    {
+        if(balloon[i].balloonshow)
+        {
+            iShowBMP2(balloon[i].xaxis,balloon[i].yaxis,balloonpics[i],0);
+        }
+    }
+}
+
+void change()
+{
+    for(int i=0; i<balloonnumber; i++)
+    {
+        balloon[i].yaxis-=10;
+
+        if(balloon[i].yaxis<=0) balloonvariables();
+    }
+    if(shoots_remaining<0)
+    {
+        highscorepage=false;
+        gameoverpage=true;
+        homepage=false;
+        gamestart=false;
+        rulespage=false;
+        shoots_remaining=25;
+        //score=0;
+        shootvariable=false;
+    }
+
+}
+
+void homewindow()
+{
+    iShowBMP(0,0,"homewindow.bmp");
+}
+
+void gameoverwindow()
+{
+    iShowBMP(0,0,"window end.bmp");
+}
+
+void highscorewindow()
+{
+    iShowBMP(0,0,"highscorewidow.bmp");
+}
+void rulewindow()
+{
+    iShowBMP(0,0,"rulespage.bmp");
+}
+
+void iDraw()
+{
+    iClear();
+    if(homepage)
+    {
+        homewindow();
+        //namebox_show=false;
+    }
+
+    if(highscorepage)
+    {
+        highscorewindow();
+        iSetColor(0,0,0);
+        iText(512,300,highscore1,GLUT_BITMAP_HELVETICA_18);
+        iText(512,280,highscore2,GLUT_BITMAP_HELVETICA_18);
+        iText(512,260,highscore3,GLUT_BITMAP_HELVETICA_18);
+
+    }
+    if(gameoverpage)
+    {
+        namebox_show=true;
+        gameoverwindow();
+        if(namebox_show)
+        {
+            iSetColor(255,255,255);
+            iText(100,100,"Enter Your Name:",GLUT_BITMAP_HELVETICA_18);
+            iFilledRectangle(100,50,100,50);
+            iSetColor(0,0,0);
+            iText(101,52,name,GLUT_BITMAP_HELVETICA_18);
+        }
+    }
+    if(rulespage)
+    {
+        rulewindow();
+    }
+    if(gamestart)
+    {
+        char scr[4],shts_rmn[3];
+        iShowBMP(0,0,bgpics[0]);
+        iShowBMP2(10,0,bgpics[1],0);
+        //balloonmovement();
+        iShowBMP2(1,10,muzzle[muzzleindex],0);
+        iText(10,490,"SCORE",GLUT_BITMAP_HELVETICA_18);
+        iText(10,470,itoa(score,scr,10),GLUT_BITMAP_HELVETICA_18);
+        iText(10,450,"Shots Remaining",GLUT_BITMAP_HELVETICA_18);
+        iText(10,430,itoa(shoots_remaining,shts_rmn,10),GLUT_BITMAP_HELVETICA_18);
+        //change();
+        if(shootvariable)
+        {
+            bulletchange();
+            shoot();
+        }
+        //collision();
+        balloonmovement();
+    }
+}
+
+
+void iMouseMove(int mx, int my)
+{
+//place your codes here
+}
+bool pause=false;
+void iMouse(int button, int state, int mx, int my)
+{
+    if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+    {
+        //printf("x=%dy=%d ",mx,my);
+        if(homepage)
+        {
+            if(mx>=746 && mx<=840 && my>=112 && my<=152)
+            {
+                exit(1);
+            }
+            if(mx>=868 && mx<=1014 && my>=101 && my<=158)
+            {
+                highscorepage=true;
+                gameoverpage=false;
+                homepage=false;
+                gamestart=false;
+                rulespage=false;
+                namebox_show=false;
+            }
+            if(mx>=703 && mx<=851 && my>=36 && my<=90)
+            {
+                highscorepage=false;
+                gameoverpage=false;
+                homepage=false;
+                gamestart=true;
+                rulespage=false;
+                namebox_show=false;
+                score=0;
+            }
+            if(mx>=866 && mx<=1011 && my>=34 && my<=86)
+            {
+                highscorepage=false;
+                gameoverpage=false;
+                homepage=false;
+                gamestart=false;
+                rulespage=true;
+                namebox_show=false;
+            }
+
+        }
+        if(gameoverpage)
+        {
+            if(mx>=360 && mx<=451 && my>=31 && my<=72)
+            {
+                highscorepage=false;
+                gameoverpage=false;
+                homepage=true;
+                gamestart=false;
+                rulespage=false;
+                //namebox_show=true;
+            }
+            if(mx>=496 && mx<=592 && my>=27 && my<=75)
+            {
+                exit(1);
+            }
+        }
+        if(highscorepage)
+        {
+            sortedscore();
+            highfunction();
+            /*iSetColor(0,0,0);
+            iText(512,300,highscore1,GLUT_BITMAP_HELVETICA_18);
+            iText(512,280,highscore2,GLUT_BITMAP_HELVETICA_18);
+            iText(512,260,highscore3,GLUT_BITMAP_HELVETICA_18);*/
+
+            if(mx>=7 && mx<=100 && my>=16 && my<=60)
+            {
+                highscorepage=false;
+                gameoverpage=false;
+                homepage=true;
+                gamestart=false;
+                rulespage=false;
+            }
+
+
+        }
+        if(rulespage)
+        {
+            if(mx>=13 && mx<=88 && my>=468 && my<=500)
+            {
+                highscorepage=false;
+                gameoverpage=false;
+                homepage=true;
+                gamestart=false;
+                rulespage=false;
+            }
+
+        }
+
+
+
+
+    }
+    if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+    {
+        /*if(gamestart&&!pause){
+         iPauseTimer(1);
+         pause=true;
+        }
+        if(gamestart&&pause){
+         iResumeTimer(1);
+         pause=false;
+        }*/
+    }
+}
+
+
+void iKeyboard(unsigned char key)
+{
+    if(gameoverpage&&namebox_show&&name_index<=19)
+    {
+        if(key!='\b')
+        {
+            name[name_index]=key;
+            name_index++;
+            //name[name_index]='\0';
+        }
+        else
+        {
+            if(name_index<0) name_index=0;
+            else name_index--;
+            //name[name_index]='\0';
+        }
+    }
+    if(key=='\r')
+    {
+        name[name_index]='\0';
+        strcpy(player.name,name);
+        player.score=score;
+        FILE*fp;
+        fp=fopen("High score.txt","a");
+        fprintf(fp," %s %d",player.name,player.score);
+        fclose(fp);
+        //sortedscore();
+        //highfunction();
+        //strcpy(player.name,"");
+
+    }
+
+//place your codes for other keys here
+}
+
+void iSpecialKeyboard(unsigned char key)
+{
+    if(key == GLUT_KEY_UP && muzzleindex>0)
+    {
+        muzzleindex--;
+    }
+
+    if(key==GLUT_KEY_DOWN && muzzleindex<6)
+    {
+        muzzleindex++;
+    }
+    if(key ==GLUT_KEY_F1)
+    {
+        shootvariable=true;
+        if(muzzleindex==0)
+        {
+            x[0]=bulletoutcoordinates[0].xindex;
+            y[0]=bulletoutcoordinates[0].yindex;
+            //z=0;
+            bulletoutcoordinates[0].bulletshow=true;
+
+        }
+        else if(muzzleindex==1)
+        {
+            x[1]=bulletoutcoordinates[1].xindex;
+            y[1]=bulletoutcoordinates[1].yindex;
+            //z=1;
+            bulletoutcoordinates[1].bulletshow=true;
+        }
+        else if(muzzleindex==2)
+        {
+            x[2]=bulletoutcoordinates[2].xindex;
+            y[2]=bulletoutcoordinates[2].yindex;
+            //z=2;
+            bulletoutcoordinates[2].bulletshow=true;
+        }
+        else if(muzzleindex==3)
+        {
+            x[3]=bulletoutcoordinates[3].xindex;
+            y[3]=bulletoutcoordinates[3].yindex;
+            //z=3;
+            bulletoutcoordinates[3].bulletshow=true;
+        }
+        else if(muzzleindex==4)
+        {
+            x[4]=bulletoutcoordinates[4].xindex;
+            y[4]=bulletoutcoordinates[4].yindex;
+            //z=4;
+            bulletoutcoordinates[4].bulletshow=true;
+        }
+        else if(muzzleindex==5)
+        {
+            x[5]=bulletoutcoordinates[5].xindex;
+            y[5]=bulletoutcoordinates[5].yindex;
+            //z=5;
+            bulletoutcoordinates[5].bulletshow=true;
+        }
+        else if(muzzleindex==6)
+        {
+            x[6]=bulletoutcoordinates[6].xindex;
+            y[6]=bulletoutcoordinates[6].yindex;
+            //z=6;
+            bulletoutcoordinates[6].bulletshow=true;
+        }
+        shoots_remaining-=1;
+        //shoot();
+    }
+    if(key==GLUT_KEY_END) exit(1);
+}
+//place your codes for other keys here
+
+int main()
+{
+    name_index=strlen(name)-1;
+    balloonvariables();
+    setbulletvariables();
+    iSetTimer(10,collision);
+    iSetTimer(150,change);
+    //printf("%s",highscore1);
+    //iSetTimer(500,change);
+    //iSetTimer(1,collision);
+    //iSetTimer(50,balloonvariables);
+    iInitialize(1024,512, "Ballon shooter");
+    return 0;
+}
+
